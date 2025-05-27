@@ -1,10 +1,13 @@
 <#
 .SYNOPSIS
-    Compare files in two folders.
+    Compare files in one or more folders.
+    The comparison consists of a list of all files and whether the file's hash and the file's name occur more than once in all folders.
 
 .PARAMETER Folders
+    A List of Paths to the folders, of which the contents should be compared.
 
 .PARAMETER Recurse
+    Whether to compare files in subdirectories.
 
 FT: add parameter [regEx?]$Pattern, only compare matching items
 #>
@@ -62,6 +65,26 @@ function Compare-FolderContents {
     return $comparison
 }
 
+<#
+.SYNOPSIS
+    Displays a list of files, grouped by the file's hashes. This is to show how many files with the same hash, i.e. the same content (provided no hash collision) occur.
+
+.PARAMETER Folders
+    A List of folders containing the files to compare.
+
+.PARAMETER Recurse
+    Whether to compare files in subdirectories.
+
+.PARAMETER JustDuplicates
+    Whether the output displays only hash-groups containing two or more files.
+
+.PARAMETER ExportCsvPath
+    If a path is provided for this parameter, the results are exported as csv to this location.
+
+.EXAMPLE
+    Show-FolderComparison -Folders "C:\temp\t1", "C:\temp\t2" -Recurse -JustDuplicates -ExportCsvPath "C:\temp\export.csv"
+
+#>
 function Show-FolderComparison {
     [CmdletBinding()]
     param(
