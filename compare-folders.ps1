@@ -93,9 +93,3 @@ function Show-FolderComparison {
     
     $results | Format-Table -GroupBy Hash -Property Name, Folder, NameDuplicates
 }
-
-Show-FolderComparison -Folders "C:\temp\t1", "C:\temp\t2" -Recurse -JustDuplicates -ExportCsvPath "C:\temp\export.csv"
-
-#Compare-FolderContents -Folders "C:\temp\t1", "C:\temp\t2" -Recurse | Format-Table -GroupBy HashDuplicates
-
-#Get-FileHash -Path "C:\temp\t1\l1.png" -Algorithm SHA1 | Get-Member

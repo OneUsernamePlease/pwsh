@@ -19,16 +19,3 @@ Function Convert-Pace {
 
     Write-Host "Pace: $minPerKm min $([Math]::Round($remainingSecondsPerKm * 60, 1)) sec per km"
 }
-
-Function Rename-Items {
-    param(
-        [string]$ContainerPath,
-        
-        [string]$NewName
-
-    )
-}
-
-
-
-
