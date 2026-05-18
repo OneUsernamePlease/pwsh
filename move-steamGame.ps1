@@ -7,35 +7,52 @@ function Find-AppManifest {
         [string[]]$Libraries
     )
 
-    foreach ($path in $libraries) {
+    foreach ($path in $Libraries) {
 
         if (-not (Test-Path $path)) {
+            Write-Error "'$path' was found as a Steam Library, but does not exist."
             continue
         }
 
         $manifestFiles = (Get-ChildItem -Path $path -Filter "appmanifest_*.acf" -File -Recurse)
 
-        foreach ($manifest in $manifestFiles) {
+        :ManifestLoop foreach ($manifest in $manifestFiles) {
 
-            #$content = (Get-Content $manifest.FullName -TotalCount 8)[-1]
-            $content = (Get-Content $manifest.FullName -TotalCount 12)
+            # Usually "installdir" is in line 8
+            $line8 = (Get-Content $manifest.FullName -TotalCount 8)[-1]
 
-            foreach ($line in $content) {
-
-                if ($line -match "installdir" -and
-                    $line -like "*`"$game`"*") {
-
+            if ($line8 -match "installdir") {
+                # Check line 8 first
+                if ($line8 -like "*`"$Game`"*") {
                     return [PSCustomObject]@{
-                        Game                = $game
-                        ManifestName        = $manifest.Name
-                        ManifestFullName    = $manifest.FullName
-                        Library             = $manifest.Directory.FullName.Replace("steamapps","")
+                        Game             = $Game
+                        ManifestName     = $manifest.Name
+                        ManifestFullName = $manifest.FullName
+                        Library          = $manifest.Directory.FullName.Replace("steamapps","")
+                    }
+                } else {
+                    continue ManifestLoop
+                }
+            } else {
+                # Search the entire file if it's not on line 8
+                $content = (Get-Content $manifest.FullName)
+                foreach ($line in $content) {
+                    if ($line -match "installdir") {
+                        if ($line -like "*`"$Game`"*") {
+                            return [PSCustomObject]@{
+                                Game             = $Game
+                                ManifestName     = $manifest.Name
+                                ManifestFullName = $manifest.FullName
+                                Library          = $manifest.Directory.FullName.Replace("steamapps","")
+                            }
+                        } else {
+                            continue ManifestLoop
+                        }
                     }
                 }
             }
         }
     }
-
     return $null
 }
 function Get-SteamLibraries {
@@ -59,7 +76,6 @@ function Get-SteamGames {
         [string[]]$gameFolders
     )
 
-    #return Get-ChildItem -Path $gameFolders -Directory | Select-Object -ExpandProperty Name
     Get-ChildItem -Path $gameFolders -Directory | ForEach-Object {
         [PSCustomObject]@{
             Name      = $_.Name
@@ -100,7 +116,7 @@ function Stop-ProcessAndWait {
         }
     }
 }
-function Resolve-NormalizedPath {
+function ConvertTo-NormalizedPath {
     param([string]$Path)
 
     [System.IO.Path]::GetFullPath($Path).TrimEnd('\').ToLower()
@@ -138,15 +154,15 @@ function Move-SteamGame {
         Write-Host "Could not find appManifest for $($selected.Name). Maybe the game got uninstalled?"
         return
     }
-    $selectedGameLibrary = Resolve-NormalizedPath -Path $selected.Library
-    $appManifestLibrary = Resolve-NormalizedPath -Path $appManifest.Library
+    $selectedGameLibrary = ConvertTo-NormalizedPath -Path $selected.Library
+    $appManifestLibrary = ConvertTo-NormalizedPath -Path $appManifest.Library
     if ($selectedGameLibrary -ne $appManifestLibrary) {
         throw "Manifest File and Game Files are in different directories"
     }
 
     # SELECT THE DESTINATION LIBRARY
     $targetLibrary = $libraries | Out-GridView -Title "Select the destination library" -OutputMode Single
-    $targetLibrary = Resolve-NormalizedPath -Path $targetLibrary
+    $targetLibrary = ConvertTo-NormalizedPath -Path $targetLibrary
     if (-not $targetLibrary) {
         Write-Host "Cancelled selection"
         return
@@ -170,7 +186,6 @@ function Move-SteamGame {
         )
 
         if ($confirm -eq 0) {
-            #Write-Host "STOPPING STEAM IS DISABLED WHILE DEVELOPING"
             Stop-ProcessAndWait -Process $steamProcess -TimeoutInSeconds 45
         } elseif ($confirm -eq 1) {
             Write-Host "Cancelled. Try Again when Steam can be closed."
@@ -184,5 +199,3 @@ function Move-SteamGame {
 }
 
 Move-SteamGame 
-
-
