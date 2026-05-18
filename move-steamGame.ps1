@@ -21,34 +21,35 @@ function Find-AppManifest {
             # Usually "installdir" is in line 8
             $line8 = (Get-Content $manifest.FullName -TotalCount 8)[-1]
 
-            if ($line8 -match "installdir") {
-                # Check line 8 first
-                if ($line8 -like "*`"$Game`"*") {
-                    return [PSCustomObject]@{
-                        Game             = $Game
-                        ManifestName     = $manifest.Name
-                        ManifestFullName = $manifest.FullName
-                        Library          = $manifest.Directory.FullName.Replace("steamapps","")
-                    }
-                } else {
+            if ($line8 -like '*"installdir"*') {
+
+                if ($line8 -notlike "*`"$Game`"*") {
                     continue ManifestLoop
+                }
+
+                return [PSCustomObject]@{
+                    Game             = $Game
+                    ManifestName     = $manifest.Name
+                    ManifestFullName = $manifest.FullName
+                    Library          = Split-Path $manifest.Directory.FullName -Parent
                 }
             } else {
                 # Search the entire file if it's not on line 8
-                $content = (Get-Content $manifest.FullName)
-                foreach ($line in $content) {
-                    if ($line -match "installdir") {
-                        if ($line -like "*`"$Game`"*") {
-                            return [PSCustomObject]@{
-                                Game             = $Game
-                                ManifestName     = $manifest.Name
-                                ManifestFullName = $manifest.FullName
-                                Library          = $manifest.Directory.FullName.Replace("steamapps","")
-                            }
-                        } else {
-                            continue ManifestLoop
-                        }
-                    }
+                foreach ($line in Get-Content $manifest.FullName) {
+                    if ($line -notlike '*"installdir"*') {
+                    continue
+                }
+
+                if ($line -notlike "*`"$Game`"*") {
+                    continue ManifestLoop
+                }
+
+                return [PSCustomObject]@{
+                    Game             = $Game
+                    ManifestName     = $manifest.Name
+                    ManifestFullName = $manifest.FullName
+                    Library          = Split-Path $manifest.Directory.FullName -Parent
+                }
                 }
             }
         }
@@ -80,7 +81,7 @@ function Get-SteamGames {
         [PSCustomObject]@{
             Name      = $_.Name
             FullName  = $_.FullName
-            Library   = ($_.Parent.FullName).Replace("steamapps\common", "")
+            Library   = $_.Parent.FullName | Split-Path -Parent | Split-Path -Parent
             Directory = $_.Parent.FullName
         }
     }
