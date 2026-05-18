@@ -38,22 +38,23 @@ function Find-AppManifest {
                 foreach ($line in Get-Content $manifest.FullName) {
                     if ($line -notlike '*"installdir"*') {
                     continue
-                }
+                    }
 
-                if ($line -notlike "*`"$Game`"*") {
-                    continue ManifestLoop
-                }
+                    if ($line -notlike "*`"$Game`"*") {
+                        continue ManifestLoop
+                    }
 
-                return [PSCustomObject]@{
-                    Game             = $Game
-                    ManifestName     = $manifest.Name
-                    ManifestFullName = $manifest.FullName
-                    Library          = Split-Path $manifest.Directory.FullName -Parent
-                }
+                    return [PSCustomObject]@{
+                        Game             = $Game
+                        ManifestName     = $manifest.Name
+                        ManifestFullName = $manifest.FullName
+                        Library          = Split-Path $manifest.Directory.FullName -Parent
+                    }
                 }
             }
         }
     }
+    
     return $null
 }
 function Get-SteamLibraries {
