@@ -37,7 +37,7 @@ function Find-AppManifest {
                 # Search the entire file if it's not on line 8
                 foreach ($line in Get-Content $manifest.FullName) {
                     if ($line -notlike '*"installdir"*') {
-                    continue
+                        continue
                     }
 
                     if ($line -notlike "*`"$Game`"*") {
@@ -136,6 +136,8 @@ Move-SteamGame
 
 .NOTES
 No idea if this works on network drives, but why would you install a game there.
+Probably only works on windows.
+Should work with PowerShell 5 - definitely works with PowerShell 7.
 
 #>
 function Move-SteamGame {
