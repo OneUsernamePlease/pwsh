@@ -1,3 +1,9 @@
+## TODO ##
+
+# choosing library: show free space on drive
+# check that enough free space is available
+
+
 function Find-AppManifest {
     param (
         [Parameter(Mandatory)]
@@ -11,6 +17,7 @@ function Find-AppManifest {
 
         if (-not (Test-Path $path)) {
             Write-Error "'$path' was found as a Steam Library, but does not exist."
+            Read-Host "Press enter to continue..."
             continue
         }
 
@@ -149,6 +156,7 @@ function Move-SteamGame {
     $selected = $games | Out-GridView -Title "Select the game to move" -OutputMode Single
     if (-not $selected) {
         Write-Host "Cancelled selection"
+        Read-Host "Press enter to continue..."
         return
     }
 
@@ -156,6 +164,7 @@ function Move-SteamGame {
     $appManifest = Find-AppManifest -Game $selected.Name -Libraries $libraries
     if (-not $appManifest) {
         Write-Host "Could not find appManifest for $($selected.Name). Maybe the game got uninstalled?"
+        Read-Host "Press enter to continue..."
         return
     }
     $selectedGameLibrary = ConvertTo-NormalizedPath -Path $selected.Library
@@ -169,10 +178,12 @@ function Move-SteamGame {
     $targetLibrary = ConvertTo-NormalizedPath -Path $targetLibrary
     if (-not $targetLibrary) {
         Write-Host "Cancelled selection"
+        Read-Host "Press enter to continue..."
         return
     }
     if ($targetLibrary -eq $selectedGameLibrary) {
         Write-Host "Game '$($selected.Name)' is already in library '$targetLibrary'."
+        Read-Host "Press enter to continue..."
         return
     }
     $destinationManifestFolder = Join-Path $targetLibrary "steamapps"
@@ -183,8 +194,8 @@ function Move-SteamGame {
     if ($steamProcess) {
 
         $confirm = $Host.UI.PromptForChoice(
-            "Confirm",
-            "Stop process '$($steamProcess.Name)' (PID $($steamProcess.Id))?",
+            "Confirm or cancel",
+            "Steam has to be stopped to continue. You may also close it manually and try again. Stop process '$($steamProcess.Name)' (PID $($steamProcess.Id))?",
             @("&Yes", "&No", "&Cancel"),
             2
         )
@@ -193,7 +204,11 @@ function Move-SteamGame {
             Stop-ProcessAndWait -Process $steamProcess -TimeoutInSeconds 45
         } elseif ($confirm -eq 1) {
             Write-Host "Cancelled. Try Again when Steam can be closed."
+            Read-Host "Press enter to continue..."
             return
+        } else {
+            Write-Host "Cancelled. Try Again when Steam can be closed."
+            Read-Host "Press enter to continue..."
         }
     }
 
